@@ -28,14 +28,22 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     super.initState();
     status = 'Your symbol: ${symbolFor(widget.player)}';
 
-    // Listen for moves from network
+    // Listen for moves and control messages from network
     widget.net.onMessage = (Map<String, dynamic> msg) {
       try {
-        if (msg['game'] == 'tic_tac_toe' && msg['type'] == 'move') {
-          final idx = (msg['data']?['index']) as int?;
-          final from = msg['player'] as String?;
-          if (idx != null && from != null) {
-            _applyMoveFromNetwork(idx, from);
+        if (msg['game'] == 'tic_tac_toe') {
+          final t = msg['type'] as String?;
+          if (t == 'move') {
+            final idx = (msg['data']?['index']) as int?;
+            final from = msg['player'] as String?;
+            if (idx != null && from != null) {
+              _applyMoveFromNetwork(idx, from);
+            }
+          } else if (t == 'reset') {
+            final who = msg['player'] as String?;
+            // Apply reset locally (do not re-broadcast)
+            _resetGame();
+            setState(() => status = 'Reset by ${who ?? 'remote'}');
           }
         }
       } catch (e) {
@@ -86,6 +94,21 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     });
   }
 
+  /// Send a reset message to other peer and reset locally
+  void _sendReset() {
+    // Local reset
+    _resetGame();
+
+    // Notify remote peer
+    final msg = {
+      'game': 'tic_tac_toe',
+      'type': 'reset',
+      'player': widget.player,
+      'data': {}
+    };
+    widget.net.send(jsonEncode(msg));
+  }
+
   String? _checkWinner() {
     final lines = [
       [0,1,2], [3,4,5], [6,7,8],
@@ -109,7 +132,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       appBar: AppBar(
         title: const Text('Tic Tac Toe'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _resetGame),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _sendReset),
         ],
       ),
       body: Column(

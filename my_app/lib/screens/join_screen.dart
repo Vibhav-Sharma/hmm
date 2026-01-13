@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import '../services/lan_network_service.dart';
+import 'tic_tac_toe_screen.dart';
+import 'reaction_game_screen.dart';
 
 class JoinScreen extends StatefulWidget {
   final VoidCallback onConnected;
@@ -117,7 +119,25 @@ class _GameScreenJoinState extends State<GameScreenJoin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Game')),
+      appBar: AppBar(
+        title: const Text('Game'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.sports_esports),
+            tooltip: 'Tic Tac Toe',
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => TicTacToeScreen(net: widget.net, player: 'client')));
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.timer),
+            tooltip: 'Reaction',
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => ReactionGameScreen(net: widget.net, player: 'client')));
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(
